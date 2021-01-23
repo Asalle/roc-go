@@ -5,40 +5,27 @@ package roc
 */
 import "C"
 
-// Network port type
-type PortType int
-
-const (
-	// Network port for audio source packets.
-	// If FEC is not used, this type of port is used to send or receive audio packets.
-	// If FEC is used, this type of port is used to send or receive FEC source packets
-	// containing audio data plus some FEC headers.
-	PortAudioSource PortType = 1
-
-	// Network port for audio repair packets.
-	// If FEC is used, this type of port is used to send or receive FEC repair packets
-	// containing redundant data for audio plus some FEC headers.
-	PortAudioRepair PortType = 2
-)
-
-// Network protocol
+// Network protocol. Defines URI scheme of Endpoint.
 type Protocol int
 
 const (
+	// RTSP 1.0 (RFC 2326) or RTSP 2.0 (RFC 7826)
+	ProtoRtsp = 10
+
 	// Bare RTP (RFC 3550).
-	ProtoRtp Protocol = 1
+	ProtoRtp Protocol = 30
 
 	// RTP source packet (RFC 3550) + FECFRAME Reed-Solomon footer (RFC 6865) with m=8.
-	ProtoRtpRs8mSource Protocol = 2
+	ProtoRtpRs8mSource Protocol = 81
 
 	// FEC repair packet + FECFRAME Reed-Solomon header (RFC 6865) with m=8.
-	ProtoRs8mRepair Protocol = 3
+	ProtoRs8mRepair Protocol = 82
 
 	// RTP source packet (RFC 3550) + FECFRAME LDPC-Staircase footer (RFC 6816).
-	ProtoRtpLdpcSource Protocol = 4
+	ProtoRtpLdpcSource Protocol = 83
 
 	// FEC repair packet + FECFRAME LDPC-Staircase header (RFC 6816).
-	ProtoLdpcRepair Protocol = 5
+	ProtoLdpcRepair Protocol = 84
 )
 
 // Forward Error Correction code
@@ -96,6 +83,24 @@ const (
 	ChannelSetStereo ChannelSet = 2
 )
 
+// Resampler backend. Affects speed and quality.
+// Some backends may be disabled at build time.
+type ResamplerBackend int
+
+const (
+	// Default backend.
+	// Depends on what was enabled at build time.
+	ResamplerBackendDefault ResamplerBackend = 0
+
+	// Slow built-in resampler.
+	// Always available.
+	ResamplerBackendBuiltin ResamplerBackend = 1
+
+	// Fast good-quality resampler from SpeexDSP.
+	// May be disabled at build time.
+	ResamplerBackendSpeex ResamplerBackend = 2
+)
+
 // Resampler profile
 type ResamplerProfile int
 
@@ -115,6 +120,13 @@ const (
 
 	// Low quality, high speed.
 	ResamplerLow ResamplerProfile = 3
+)
+
+type ClockSource int
+
+const (
+	ClockExternal ClockSource = 0
+	ClockInternal ClockSource = 1
 )
 
 // Context configuration

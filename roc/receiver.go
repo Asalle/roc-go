@@ -39,6 +39,23 @@ func OpenReceiver(rocContext *Context, receiverConfig *ReceiverConfig) (*Receive
 	return (*Receiver)(receiver), nil
 }
 
+func (r *Receiver) SetMultiCastGroup(iface Interface, ip string) {
+	cip := toCStr(ip)
+	errCode := C.roc_receiver_set_multicast_group(
+		(*C.roc_receiver)(r),
+		(*C.roc_interface)(iface),
+		(*C.char)(unsafe.Pointer(&cip[0])),
+	)
+	if errCode == 0 {
+		return nil
+	}
+	if errCode < 0 {
+		return ErrInvalidArgs
+	}
+	panic(fmt.Sprintf(
+		"unexpected return code %d from roc_receiver_bind()", errCode))
+}
+
 func (r *Receiver) Bind(portType PortType, proto Protocol, a *Address) error {
 	errCode := C.roc_receiver_bind(
 		(*C.roc_receiver)(r),

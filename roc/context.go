@@ -14,14 +14,22 @@ type Context C.roc_context
 
 func OpenContext(contextConfig *ContextConfig) (*Context, error) {
 	var cCtxConfig C.struct_roc_context_config
+	var cContext *C.struct_roc_context
 	cCtxConfig.max_packet_size = C.uint(contextConfig.MaxPacketSize)
 	cCtxConfig.max_frame_size = C.uint(contextConfig.MaxFrameSize)
 
-	c := C.roc_context_open(&cCtxConfig)
-	if c == nil {
+	errCode := C.roc_context_open(&cCtxConfig, &cContext)
+	if errCode == 0 {
+		return a, nil
+	}
+	if errCode < 0 {
 		return nil, ErrInvalidArgs
 	}
-	return (*Context)(c), nil
+
+	panic(fmt.Sprintf(
+		"unexpected return code %d from roc_address_init()", errCode))
+
+	return (*Context)(cContext), nil
 }
 
 func (c *Context) Close() error {

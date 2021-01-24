@@ -17,7 +17,7 @@ import (
 type Sender C.roc_sender
 
 func OpenSender(rocContext *Context, senderConfig *SenderConfig) (*Sender, error) {
-	senderConfigC := C.struct_roc_sender_config{
+	cSenderConfig := C.struct_roc_sender_config{
 		frame_sample_rate:        (C.uint)(senderConfig.FrameSampleRate),
 		frame_channels:           (C.roc_channel_set)(senderConfig.FrameChannels),
 		frame_encoding:           (C.roc_frame_encoding)(senderConfig.FrameEncoding),
@@ -32,11 +32,73 @@ func OpenSender(rocContext *Context, senderConfig *SenderConfig) (*Sender, error
 		fec_block_source_packets: (C.uint)(senderConfig.FecBlockSourcePackets),
 		fec_block_repair_packets: (C.uint)(senderConfig.FecBlockRepairPackets),
 	}
-	sender := C.roc_sender_open((*C.roc_context)(rocContext), &senderConfigC)
+	var cSender *C.roc_sender
+	sender := C.roc_sender_open((*C.roc_context)(rocContext), &cSenderConfig, &cSender)
 	if sender == nil {
 		return nil, ErrInvalidArgs
 	}
 	return (*Sender)(sender), nil
+}
+
+func (s *Sender) SetOutgoingAddress(iface Interface, ip string) {
+	cip := toCStr(ip)
+	errCode := C.roc_sender_set_outgoing_address(
+		(*C.roc_sender)(s),
+		(C.roc_interface)(iface),
+		(*C.char)(unsafe.Pointer(&cip[0])),
+	)
+	if errCode == 0 {
+		return nil
+	}
+	if errCode < 0 {
+		return ErrInvalidArgs
+	}
+	panic(fmt.Sprintf(
+		"unexpected return code %d from roc_receiver_bind()", errCode))
+}
+
+func (s *Sender) SetBroadcastEnabled(iface Interface, bool enabled) {
+	var cEnabled C.int
+	if enabled {
+		cEnabled = 1
+	} else {
+		cEnabled = 0
+	}
+	errCode := C.roc_sender_set_broadcast_enabled(
+		(*C.roc_sender)(s),
+		(C.roc_interface)(iface),
+		cEnabled,
+	)
+	if errCode == 0 {
+		return nil
+	}
+	if errCode < 0 {
+		return ErrInvalidArgs
+	}
+	panic(fmt.Sprintf(
+		"unexpected return code %d from roc_receiver_bind()", errCode))
+}
+
+func (s *Sender) SetSquashingEnabled(iface Interface, bool enabled) {
+	var cEnabled C.int
+	if enabled {
+		cEnabled = 1
+	} else {
+		cEnabled = 0
+	}
+	errCode := C.roc_sender_set_squashing_enabled(
+		(*C.roc_sender)(s),
+		(C.roc_interface)(iface),
+		cEnabled,
+	)
+	if errCode == 0 {
+		return nil
+	}
+	if errCode < 0 {
+		return ErrInvalidArgs
+	}
+	panic(fmt.Sprintf(
+		"unexpected return code %d from roc_receiver_bind()", errCode))
 }
 
 func (s *Sender) Bind(a *Address) error {
